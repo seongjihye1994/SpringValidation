@@ -11,6 +11,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -31,6 +33,16 @@ public class ValidationItemControllerV2 {
         this.itemRepository = itemRepository;
         this.itemValidator = itemValidator;
     }*/
+
+    /**
+     * @param dataBinder
+     * ValidationItemControllerV2 컨트롤러가 호출될 때 마다
+     * 자동으로 @InitBinder init 메소드가 호출된다.
+     */
+    @InitBinder
+    public void init(WebDataBinder dataBinder) {
+        dataBinder.addValidators(itemValidator); // 검증 Validator 넘김
+    }
 
     @GetMapping
     public String items(Model model) {
@@ -263,12 +275,13 @@ public class ValidationItemControllerV2 {
     }
 
     // @PostMapping("/add")
-/*    public String addItemV4(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {
+    public String addItemV4(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {
 
-        *//**
-         * validation
-         * model에 오류를 담아 클라이언트로 반환
-         *//*
+        /**
+         *
+         validation
+         model에 오류를 담아 클라이언트로 반환
+         /*
 
         // 1. 검증 오류 결과를 보관
         *//**
@@ -276,7 +289,7 @@ public class ValidationItemControllerV2 {
          * bindingResult가 이미 검증해야 할 target(여기서는 Item) 객체를 알고있다.
          * 그렇기 때문에 필드를 검증할 때는 rejectValue("필드명", "오류메세지 이름 앞글자", 메세지 파라미터, 디폴트메세지) 형태로 작성하고,
          * 오브젝트를 검증할 때는 reject("오류메세지 이름 앞글자", 메세지 파라미터, 디폴트메세지) 형태로 작성할 수 있다.
-         *//*
+         */
         // 2. 검증 로직
         if (!StringUtils.hasText(item.getItemName())) { // item 의 name 이 null 이라면
             bindingResult.rejectValue("itemName", "required");
@@ -300,15 +313,14 @@ public class ValidationItemControllerV2 {
         }
 
         // 4. 검증에 실패하면 다시 입력 폼으로
-        *//**
+        /**
+         *
          * bindingResult.hasErrors();
          * 에러 유무를 판단한다.
-         *//*
+         */
         if (bindingResult.hasErrors()) {
             log.info("bindingResult={}", bindingResult);
-            *//**
-             * bindingResult 는 자동으로 view에 넘어가므로 model에 담지 않아도 된다.
-             *//*
+            // bindingResult 는 자동으로 view에 넘어가므로 model에 담지 않아도 된다.
             return "validation/v2/addForm";
         }
 
@@ -317,14 +329,36 @@ public class ValidationItemControllerV2 {
         redirectAttributes.addAttribute("itemId", savedItem.getId());
         redirectAttributes.addAttribute("status", true);
         return "redirect:/validation/v2/items/{itemId}";
-    }*/
+    }
 
 
-    @PostMapping("/add")
+    // @PostMapping("/add")
     public String addItemV5(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {
 
         // 검증기 호출
         itemValidator.validate(item, bindingResult);
+
+        if (bindingResult.hasErrors()) {
+            log.info("bindingResult={}", bindingResult);
+            /**
+             * bindingResult 는 자동으로 view에 넘어가므로 model에 담지 않아도 된다.
+             */
+            return "validation/v2/addForm";
+        }
+
+        // 검증 성공 로직
+        Item savedItem = itemRepository.save(item);
+        redirectAttributes.addAttribute("itemId", savedItem.getId());
+        redirectAttributes.addAttribute("status", true);
+        return "redirect:/validation/v2/items/{itemId}";
+    }
+
+    /**
+     * @Validated 를 파라미터로
+     * @InitBinder 에서 자동으로 호출되는 검증 로직을 도입한다.
+     */
+    @PostMapping("/add")
+    public String addItemV6(@Validated @ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {
 
         if (bindingResult.hasErrors()) {
             log.info("bindingResult={}", bindingResult);
