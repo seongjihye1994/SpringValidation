@@ -40,7 +40,7 @@ public class ItemValidator implements Validator {
             errors.rejectValue("quantity", "max", new Object[]{9999}, null);
         }
 
-        // 특정 필드가 아닌 복합 룰 검증
+        // 특정 필드가 아닌 복합 룰 검증 (글로벌 오브젝트 오류)
         if (item.getPrice() != null && item.getQuantity() != null) {
             int resultPrice = item.getPrice() * item.getQuantity();
 
